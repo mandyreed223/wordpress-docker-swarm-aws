@@ -36,7 +36,7 @@ services:
           memory: 600M
 
   wordpress:
-    image: wordpress:latest
+    image: wordpress:7.1
     environment:
       WORDPRESS_DB_HOST: mysql:3306
       WORDPRESS_DB_USER: wordpress
