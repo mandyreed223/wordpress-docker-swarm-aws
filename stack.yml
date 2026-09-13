@@ -1,0 +1,93 @@
+version: "3.8"
+
+services:
+  mysql:
+    image: "mysql:8.4@sha256:85b9bf2e29cf836ecb8c2a15a935d4ba0c606631dff1dd79531a111983c638f2a"
+    environment:
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wordpress
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/mysql_root_password
+      MYSQL_PASSWORD_FILE: /run/secrets/wordpress_db_password
+
+    secrets:
+      - mysql_root_password
+      - wordpress_db_password
+
+    networks:
+      - backend-net
+
+    volumes:
+      - mysql-data:/var/lib/mysql
+
+    deploy:
+      placement:
+        constraints:
+          - node.labels.database == true
+
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+
+      resources:
+        reservations:
+          memory: 256M
+        limits:
+          memory: 600M
+
+  wordpress:
+    image: "wordpress:latest@sha256:5a93c470ae8220fddf71f6ebe3bc94e615ddc2ae4d9810f795b830fb11c41a17"
+    environment:
+      WORDPRESS_DB_HOST: mysql:3306
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_NAME: wordpress
+      WORDPRESS_DB_PASSWORD_FILE: /run/secrets/wordpress_db_password
+
+    secrets:
+      - wordpress_db_password
+
+    networks:
+      - frontend-net
+      - backend-net
+
+    volumes:
+      - type: bind
+        source: /mnt/efs/wordpress-uploads
+        target: /var/www/html/wp-content/uploads
+
+    ports:
+      - target: 80
+        published: 80
+        protocol: tcp
+        mode: ingress
+
+    deploy:
+      replicas: 3
+
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+
+      resources:
+        reservations:
+          memory: 64M
+        limits:
+          memory: 256M
+
+volumes:
+  mysql-data:
+    external: true
+
+networks:
+  frontend-net:
+    external: true
+
+  backend-net:
+    external: true
+
+secrets:
+  mysql_root_password:
+    external: true
+
+  wordpress_db_password:
+    external: true

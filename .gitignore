@@ -1,0 +1,15 @@
+# Secrets
+*.txt
+*.env
+.env
+
+# Terraform-style secret files, just in case
+*.tfvars
+*.tfvars.json
+
+# VS Code
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db   
